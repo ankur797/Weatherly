@@ -185,5 +185,4 @@ The application is engineered with high resilience:
 
 ---
 
-**Developed for Internship Evaluation — Final Responsive Website & JavaScript Interactivity.**
 
