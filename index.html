@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Weatherly - Modern, responsive weather forecast application featuring real-time conditions, hourly and 7-day forecasts, favorites management, and dynamic themes.">
+  <title>Weatherly | Real-Time Weather Dashboard</title>
+
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-weather-clear">
+  <!-- Background Ambient Glow & Particles -->
+  <div class="ambient-glow" aria-hidden="true"></div>
+  <div class="weather-canvas-container" aria-hidden="true">
+    <canvas id="weather-canvas"></canvas>
+  </div>
+
+  <!-- Application Shell -->
+  <div class="app-shell">
+    
+    <!-- ========================================== -->
+    <!-- 1. SEMANTIC HEADER & NAVIGATION           -->
+    <!-- ========================================== -->
+    <header class="app-header">
+      <div class="header-container">
+        <!-- Logo & Branding -->
+        <div class="brand">
+          <div class="brand-icon-wrapper" aria-hidden="true">
+            <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+              <path d="M12 3v3M18.36 5.64l-2.12 2.12M21 12h-3"/>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <h1 class="brand-title">Weather<span>ly</span></h1>
+            <p class="brand-subtitle">Your Daily Forecast Companion</p>
+          </div>
+        </div>
+
+        <!-- Quick Status Indicator -->
+        <div class="live-indicator" aria-label="System status: live">
+          <span class="pulse-dot"></span>
+          <span class="live-text" id="live-time-display">Updating...</span>
+        </div>
+
+        <!-- App Utility Controls (Flexbox) -->
+        <nav class="app-nav" aria-label="Application Settings">
+          <!-- Unit Toggle Button (°C / °F) -->
+          <div class="unit-toggle-group" role="group" aria-label="Temperature Unit Switcher">
+            <button type="button" class="unit-btn active" id="btn-unit-c" data-unit="C" aria-pressed="true" title="Switch to Celsius">°C</button>
+            <button type="button" class="unit-btn" id="btn-unit-f" data-unit="F" aria-pressed="false" title="Switch to Fahrenheit">°F</button>
+          </div>
+
+          <!-- Theme Toggle (Auto / Dark / Light) -->
+          <button type="button" class="action-btn theme-toggle-btn" id="theme-toggle-btn" aria-label="Toggle visual theme" title="Toggle Light/Dark Theme">
+            <svg class="icon theme-icon-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+            <svg class="icon theme-icon-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+            </svg>
+          </button>
+
+          <!-- Jump to Saved Locations Button -->
+          <button type="button" class="action-btn favorites-nav-btn" id="nav-favorites-btn" aria-label="View saved locations" title="Jump to Saved Cities">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>
+            </svg>
+            <span class="badge" id="favorites-badge-count">0</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- 2. MAIN APPLICATION CONTENT               -->
+    <!-- ========================================== -->
+    <main class="main-content" id="main-content">
+      
+      <!-- Search & Geolocation Section -->
+      <section class="search-section" aria-label="Search and Location Selection">
+        <div class="search-wrapper">
+          <form class="search-form" id="search-form" role="search" novalidate>
+            <div class="input-container">
+              <span class="search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+              </span>
+              
+              <input 
+                type="text" 
+                id="search-input" 
+                class="search-input" 
+                placeholder="Search city, country or state (e.g. Tokyo, London, New York, Mumbai)..." 
+                autocomplete="off" 
+                spellcheck="false"
+                aria-label="City name"
+                aria-describedby="search-error-msg"
+                required
+              >
+
+              <!-- Clear search button -->
+              <button type="button" class="clear-input-btn hidden" id="clear-search-btn" aria-label="Clear input text">
+                &times;
+              </button>
+
+              <!-- Live Spinner for async operations -->
+              <div class="search-spinner hidden" id="search-spinner" aria-hidden="true"></div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="submit-search-btn" id="submit-search-btn">
+              <span>Search</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
+
+            <!-- Geolocation Button -->
+            <button type="button" class="geo-btn" id="geo-btn" title="Use Current GPS Location" aria-label="Detect current location">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <line x1="2" y1="12" x2="5" y2="12"></line>
+                <line x1="19" y1="12" x2="22" y2="12"></line>
+                <line x1="12" y1="2" x2="12" y2="5"></line>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+                <circle cx="12" cy="12" r="7"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <span class="geo-btn-label">Current</span>
+            </button>
+          </form>
+
+          <!-- Client-side Validation Error Message Container -->
+          <div class="validation-message" id="search-error-msg" role="alert" aria-live="polite"></div>
+
+          <!-- Dynamic Autocomplete Suggestions Dropdown -->
+          <div class="suggestions-dropdown hidden" id="suggestions-dropdown" role="listbox" aria-label="Location suggestions">
+            <!-- Populated via JavaScript dynamically -->
+          </div>
+
+          <!-- Popular Quick-Select Cities Pills -->
+          <div class="quick-cities-bar" aria-label="Popular quick cities">
+            <span class="quick-cities-label">Popular:</span>
+            <div class="quick-pills-container" id="quick-cities-list">
+              <button type="button" class="quick-pill" data-city="London">London</button>
+              <button type="button" class="quick-pill" data-city="Tokyo">Tokyo</button>
+              <button type="button" class="quick-pill" data-city="New York">New York</button>
+              <button type="button" class="quick-pill" data-city="Paris">Paris</button>
+              <button type="button" class="quick-pill" data-city="Dubai">Dubai</button>
+              <button type="button" class="quick-pill" data-city="Sydney">Sydney</button>
+              <button type="button" class="quick-pill" data-city="Mumbai">Mumbai</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Weather Dashboard Main Container (Grid / Flexbox) -->
+      <div class="dashboard-grid" id="dashboard-view">
+
+        <!-- ========================================== -->
+        <!-- 3. CURRENT WEATHER HERO CARD               -->
+        <!-- ========================================== -->
+        <section class="hero-weather-section" aria-label="Current Weather Conditions">
+          <article class="weather-hero-card glass-panel" id="hero-card">
+            <!-- Card Header: Location & Action buttons -->
+            <header class="hero-header">
+              <div class="location-metadata">
+                <div class="location-title-row">
+                  <svg class="location-pin-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  <h2 class="current-city-name" id="city-name-display">Loading City...</h2>
+                  <span class="country-badge" id="country-badge-display">--</span>
+                </div>
+                <p class="current-date-time" id="date-time-display">--</p>
+              </div>
+
+              <!-- Top Action Buttons (Refresh & Save) -->
+              <div class="hero-action-buttons">
+                <button type="button" class="icon-action-btn" id="refresh-weather-btn" title="Refresh weather data" aria-label="Refresh current weather">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                  </svg>
+                </button>
+                <button type="button" class="icon-action-btn bookmark-btn" id="toggle-favorite-btn" title="Save city to favorites" aria-label="Save to favorites">
+                  <svg class="bookmark-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  <span class="bookmark-text" id="favorite-btn-text">Save</span>
+                </button>
+              </div>
+            </header>
+
+            <!-- Hero Body: Large Temperature & Main Weather Graphic -->
+            <div class="hero-body">
+              <div class="temperature-container">
+                <div class="temperature-value-wrapper">
+                  <span class="main-temperature" id="current-temp-display">--</span>
+                  <span class="temp-unit" id="current-unit-display">°C</span>
+                </div>
+                <div class="temp-extremes">
+                  <span class="temp-high" title="Today's high">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="m18 15-6-6-6 6"/>
+                    </svg>
+                    H: <span id="temp-high-display">--°</span>
+                  </span>
+                  <span class="temp-low" title="Today's low">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                    L: <span id="temp-low-display">--°</span>
+                  </span>
+                  <span class="temp-feels" title="Feels like">
+                    Feels like <span id="temp-feels-display">--°</span>
+                  </span>
+                </div>
+              </div>
+
+              <div class="condition-display-wrapper">
+                <div class="condition-icon-box" id="main-condition-icon" aria-hidden="true">
+                  <!-- Injected SVG Condition Graphic -->
+                </div>
+                <span class="condition-badge" id="condition-badge-display">Partly Cloudy</span>
+              </div>
+            </div>
+
+            <!-- Hero Footer: Brief Atmospheric Summary Bar -->
+            <footer class="hero-footer">
+              <div class="summary-pill">
+                <span class="pill-dot"></span>
+                <span id="atmospheric-summary-text">Loading local atmosphere dynamics...</span>
+              </div>
+              <time class="last-updated-tag" id="last-updated-text" datetime="2026-11-11">Updated: Just now</time>
+            </footer>
+          </article>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 4. KEY METRICS GRID (CSS GRID DEMONSTRATION) -->
+        <!-- ========================================== -->
+        <section class="metrics-section" aria-label="Detailed Meteorological Metrics">
+          <h3 class="section-heading">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/>
+            </svg>
+            Atmospheric Dynamics & Details
+          </h3>
+
+          <div class="metrics-grid">
+            <!-- Metric 1: Wind Speed & Direction with Compass -->
+            <article class="metric-card glass-panel" id="metric-wind">
+              <header class="metric-header">
+                <span class="metric-label">Wind & Gusts</span>
+                <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/>
+                  <path d="M9.6 4.6A2 2 0 1 1 11 8H2"/>
+                  <path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>
+                </svg>
+              </header>
+              <div class="metric-value-row">
+                <span class="metric-primary" id="wind-speed-display">--</span>
+                <span class="metric-sub-unit" id="wind-unit-display">km/h</span>
+              </div>
+              <div class="compass-row">
+                <div class="compass-circle">
+                  <div class="compass-arrow" id="wind-compass-arrow" style="transform: rotate(0deg);">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="12 2 16 11 12 8 8 11 12 2"/>
+                    </svg>
+                  </div>
+                </div>
+                <div class="compass-text">
+                  <span class="direction-name" id="wind-direction-text">North</span>
+                  <span class="direction-degrees" id="wind-degrees-text">0°</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- Metric 2: Humidity & Dew Point -->
+            <article class="metric-card glass-panel" id="metric-humidity">
+              <header class="metric-header">
+                <span class="metric-label">Humidity</span>
+                <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                </svg>
+              </header>
+              <div class="metric-value-row">
+                <span class="metric-primary" id="humidity-display">--</span>
+                <span class="metric-sub-unit">%</span>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="humidity-bar-fill" style="width: 50%;"></div>
+              </div>
+              <p class="metric-footer-note" id="humidity-desc-text">Optimal indoor comfort</p>
+            </article>
+
+            <!-- Metric 3: UV Index -->
+            <article class="metric-card glass-panel" id="metric-uv">
+              <header class="metric-header">
+                <span class="metric-label">UV Index</span>
+                <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                </svg>
+              </header>
+              <div class="metric-value-row">
+                <span class="metric-primary" id="uv-display">--</span>
+                <span class="metric-sub-tag" id="uv-rating-tag">Moderate</span>
+              </div>
+              <div class="uv-scale-bar">
+                <div class="uv-indicator-point" id="uv-indicator-point" style="left: 30%;"></div>
+              </div>
+              <p class="metric-footer-note" id="uv-advice-text">Sun protection recommended at midday</p>
+            </article>
+
+            <!-- Metric 4: Air Pressure -->
+            <article class="metric-card glass-panel" id="metric-pressure">
+              <header class="metric-header">
+                <span class="metric-label">Pressure</span>
+                <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </header>
+              <div class="metric-value-row">
+                <span class="metric-primary" id="pressure-display">--</span>
+                <span class="metric-sub-unit">hPa</span>
+              </div>
+              <div class="pressure-gauge-visual">
+                <span class="pressure-badge" id="pressure-badge">Normal</span>
+              </div>
+              <p class="metric-footer-note" id="pressure-desc-text">Atmospheric pressure is steady</p>
+            </article>
+
+            <!-- Metric 5: Precipitation Probability -->
+            <article class="metric-card glass-panel" id="metric-precipitation">
+              <header class="metric-header">
+                <span class="metric-label">Precipitation</span>
+                <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/>
+                  <path d="M8 19v2M8 13v2M16 19v2M16 13v2M12 21v2M12 15v2"/>
+                </svg>
+              </header>
+              <div class="metric-value-row">
+                <span class="metric-primary" id="precip-display">0</span>
+                <span class="metric-sub-unit">mm</span>
+              </div>
+              <p class="metric-footer-note" id="precip-note-text">No rain expected in the next few hours</p>
+            </article>
+
+            <!-- Metric 6: Sunrise & Sunset Timings -->
+            <article class="metric-card glass-panel" id="metric-sun">
+              <header class="metric-header">
+                <span class="metric-label">Sun Cycle</span>
+                <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/>
+                </svg>
+              </header>
+              <div class="sun-cycle-grid">
+                <div class="sun-item">
+                  <span class="sun-label">Sunrise</span>
+                  <span class="sun-time" id="sunrise-display">--:--</span>
+                </div>
+                <div class="sun-item">
+                  <span class="sun-label">Sunset</span>
+                  <span class="sun-time" id="sunset-display">--:--</span>
+                </div>
+              </div>
+              <p class="metric-footer-note" id="daylight-duration-text">Daylight: --h --m</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 5. FORECAST SECTION (HOURLY & 7-DAY)       -->
+        <!-- ========================================== -->
+        <section class="forecast-section" aria-label="Weather Forecast Timelines">
+          <div class="forecast-container glass-panel">
+            <!-- Tab Controls & Filters (Flexbox) -->
+            <header class="forecast-header">
+              <div class="forecast-tabs" role="tablist" aria-label="Forecast views">
+                <button 
+                  type="button" 
+                  class="tab-btn active" 
+                  role="tab" 
+                  id="tab-hourly" 
+                  aria-selected="true" 
+                  aria-controls="panel-hourly"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  24-Hour Forecast
+                </button>
+                <button 
+                  type="button" 
+                  class="tab-btn" 
+                  role="tab" 
+                  id="tab-daily" 
+                  aria-selected="false" 
+                  aria-controls="panel-daily"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  7-Day Outlook
+                </button>
+              </div>
+
+              <!-- Filter Tool: Filter daily outlook (Weekend / All / Warmest) -->
+              <div class="forecast-filter-controls">
+                <label for="forecast-filter-select" class="visually-hidden">Filter Outlook Days</label>
+                <select id="forecast-filter-select" class="custom-select" aria-label="Filter forecast days">
+                  <option value="all">Show All 7 Days</option>
+                  <option value="weekend">Weekend Only</option>
+                  <option value="warmest">Warmest Days First</option>
+                </select>
+              </div>
+            </header>
+
+            <!-- Hourly Panel (Horizontal Flexbox Carousel) -->
+            <div class="tab-panel active" id="panel-hourly" role="tabpanel" aria-labelledby="tab-hourly">
+              <div class="hourly-scroll-container" id="hourly-list">
+                <!-- Dynamically populated via app.js -->
+              </div>
+            </div>
+
+            <!-- 7-Day Panel (Grid of day cards) -->
+            <div class="tab-panel hidden" id="panel-daily" role="tabpanel" aria-labelledby="tab-daily">
+              <div class="daily-cards-grid" id="daily-list">
+                <!-- Dynamically populated via app.js -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- 6. SAVED CITIES / FAVORITES (ADD / EDIT / DELETE DEMONSTRATION) -->
+        <!-- ============================================================== -->
+        <section class="saved-cities-section" id="favorites-section" aria-label="Favorite Saved Locations">
+          <div class="favorites-container glass-panel">
+            <header class="favorites-header">
+              <div class="favorites-title-wrap">
+                <h3 class="section-heading">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  My Saved Cities & Watchlist
+                </h3>
+                <p class="section-subtext">Manage personal locations with custom tags, custom notes, and fast weather switching.</p>
+              </div>
+
+              <!-- Top Actions: Search Filter & Add Current City -->
+              <div class="favorites-top-actions">
+                <div class="fav-filter-box">
+                  <input 
+                    type="search" 
+                    id="filter-favorites-input" 
+                    class="fav-filter-input" 
+                    placeholder="Filter saved by name or tag..." 
+                    aria-label="Filter saved cities"
+                  >
+                </div>
+                <button type="button" class="btn btn-primary" id="btn-add-modal-open">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  <span>Add Location</span>
+                </button>
+              </div>
+            </header>
+
+            <!-- Saved Cities Grid List -->
+            <div class="saved-cities-grid" id="saved-cities-container">
+              <!-- Dynamically rendered via app.js -->
+            </div>
+
+            <!-- Empty State Illustration -->
+            <div class="empty-state-card hidden" id="favorites-empty-state">
+              <div class="empty-icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </div>
+              <h4 class="empty-title">No Saved Locations Found</h4>
+              <p class="empty-desc">Bookmark locations from the main dashboard or click "Add Location" to start tracking your favorite destinations.</p>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- End dashboard-grid -->
+    </main>
+
+    <!-- ========================================== -->
+    <!-- 7. SEMANTIC FOOTER                         -->
+    <!-- ========================================== -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <div class="footer-left">
+          <p class="copyright"></p>&copy; 2026 <strong>Weatherly Meteorology</strong>. </p>
+        </div>
+        <div class="footer-right">
+          <span class="data-source-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            Live Meteorological Feeds
+          </span>
+          <button type="button" class="back-to-top-btn" id="btn-back-to-top" aria-label="Scroll back to top">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <polyline points="18 15 12 9 6 15"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </footer>
+  </div><!-- End app-shell -->
+
+  <!-- ============================================================== -->
+  <!-- 8. INTERACTIVE MODAL DIALOGS (FOR ADD & EDIT FUNCTIONALITY)   -->
+  <!-- ============================================================== -->
+
+  <!-- Modal: Add / Edit Saved Location -->
+  <div class="modal-backdrop hidden" id="location-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card glass-panel">
+      <header class="modal-header">
+        <h3 class="modal-title" id="modal-title">Edit Location</h3>
+        <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close dialog">&times;</button>
+      </header>
+      
+      <form id="location-modal-form" class="modal-form" novalidate>
+        <!-- Hidden input for ID -->
+        <input type="hidden" id="modal-city-id" value="">
+
+        <!-- City Name Input (Read-only or editable) -->
+        <div class="form-group">
+          <label for="modal-city-name" class="form-label">City Name <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="modal-city-name" 
+            class="form-control" 
+            placeholder="e.g. Kyoto, Japan" 
+            required
+            maxlength="40"
+          >
+          <span class="field-error" id="modal-name-error"></span>
+        </div>
+
+        <!-- Custom Tag / Category Selection -->
+        <div class="form-group">
+          <label for="modal-city-tag" class="form-label">Category Tag</label>
+          <div class="tag-selector-group">
+            <label class="tag-radio-label">
+              <input type="radio" name="location-tag" value="Home" checked>
+              <span class="tag-chip tag-home">🏠 Home</span>
+            </label>
+            <label class="tag-radio-label">
+              <input type="radio" name="location-tag" value="Work">
+              <span class="tag-chip tag-work">💼 Work</span>
+            </label>
+            <label class="tag-radio-label">
+              <input type="radio" name="location-tag" value="Travel">
+              <span class="tag-chip tag-travel">✈️ Travel</span>
+            </label>
+            <label class="tag-radio-label">
+              <input type="radio" name="location-tag" value="Family">
+              <span class="tag-chip tag-family">❤️ Family</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Personal Note Input -->
+        <div class="form-group">
+          <label for="modal-city-notes" class="form-label">Personal Notes (Optional)</label>
+          <textarea 
+            id="modal-city-notes" 
+            class="form-control textarea" 
+            rows="3" 
+            placeholder="Add reminder or note (e.g. Conference next Monday, flight at 6pm, check rain gear)..."
+            maxlength="150"
+          ></textarea>
+          <div class="character-count"><span id="note-char-count">0</span> / 150 characters</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="modal-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="modal-save-btn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container (Floating) -->
+  <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true">
+    <!-- Toasts injected via JavaScript -->
+  </div>
+
+  <!-- Main JavaScript File -->
+  <script src="react.js"></script>
+</body>
+</html>
+
