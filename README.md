@@ -2,17 +2,15 @@
 
 Weatherly is a real-time, responsive meteorological web application built with **Semantic HTML5, CSS3 (Box Model, Flexbox, Grid, Media Queries), and Modern Vanilla JavaScript (ES6+)**.
 
-This project has been engineered to fulfill the requirements of **Task 3: Final Responsive Website (30 Marks)** and **Task 4: JavaScript Interactivity (15 Marks)**.
-
 ---
 
 ## 📋 Table of Contents
 1. [Project Overview & Key Features](#-project-overview--key-features)
-2. [Task 3: Final Responsive Website Rubric (30 Marks)](#-task-3-final-responsive-website-rubric-30-marks)
+2.  Final Responsive Website Rubric
    - [HTML Structure & Semantics](#1-html-structure--semantic-html)
    - [CSS Styling (Box Model, Flexbox, Grid, Media Queries)](#2-css-styling--responsive-architecture)
    - [JavaScript Fundamentals (Functions, Arrays, Objects, DOM, Events)](#3-javascript-fundamentals)
-3. [Task 4: JavaScript Interactivity Rubric (15 Marks)](#-task-4-javascript-interactivity-rubric-15-marks)
+ 3.  JavaScript Interactivity Rubric 
    - [Dynamic Content](#1-dynamic-content)
    - [Form Validation](#2-form-validation)
    - [Interactive Buttons & State](#3-interactive-buttons--controls)
@@ -34,7 +32,7 @@ This project has been engineered to fulfill the requirements of **Task 3: Final 
 
 ---
 
-## 🏆 Task 3: Final Responsive Website Rubric (30 Marks)
+## 🏆 Final Responsive Website Rubric
 
 ### 1. HTML Structure & Semantic HTML
 The document adheres strictly to W3C standards using modern semantic elements:
@@ -99,7 +97,7 @@ The document adheres strictly to W3C standards using modern semantic elements:
 
 ---
 
-## ⚡ Task 4: JavaScript Interactivity Rubric (15 Marks)
+## ⚡ JavaScript Interactivity Rubric 
 
 ### 1. Dynamic Content
 - **Live Meteorological Feed**: Connects to the Open-Meteo REST API (free, open, no API key required) for real-time worldwide weather.
